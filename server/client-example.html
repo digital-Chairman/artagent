@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket.IO Client Example</title>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 600px;
+      width: 100%;
+      padding: 30px;
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 24px;
+    }
+    
+    .status {
+      padding: 12px;
+      margin: 20px 0;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .connected {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .disconnected {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+    
+    input {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #e1e1e1;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.3s ease;
+      min-width: 200px;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    button {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .messages {
+      border: 2px solid #e1e1e1;
+      border-radius: 6px;
+      padding: 15px;
+      max-height: 300px;
+      overflow-y: auto;
+      background: #fafafa;
+    }
+    
+    .message {
+      padding: 10px;
+      margin: 5px 0;
+      background: white;
+      border-radius: 4px;
+      border-left: 3px solid #667eea;
+      font-size: 14px;
+      animation: slideIn 0.3s ease;
+    }
+    
+    .message .time {
+      color: #888;
+      font-size: 12px;
+      margin-right: 10px;
+    }
+    
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    
+    h3 {
+      color: #555;
+      margin: 20px 0 10px 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 Socket.IO Test Client</h1>
+    <div id="status" class="status disconnected">⏸ Disconnected</div>
+    
+    <div class="controls">
+      <input type="text" id="roomInput" placeholder="Room name" value="test-room">
+      <button onclick="joinRoom()">Join Room</button>
+      <button onclick="leaveRoom()">Leave Room</button>
+    </div>
+    
+    <div class="controls">
+      <input type="text" id="messageInput" placeholder="Type a message...">
+      <button onclick="sendMessage()">Send</button>
+    </div>
+    
+    <h3>📨 Messages</h3>
+    <div id="messages" class="messages">
+      <div class="message">Waiting for connection...</div>
+    </div>
+  </div>
+  
+  <script>
+    // Connect to Socket.IO server
+    const socket = io('http://localhost:3001', {
+      transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionAttempts: 5
+    });
+    
+    const statusDiv = document.getElementById('status');
+    const messagesDiv = document.getElementById('messages');
+    
+    // Connection events
+    socket.on('connect', () => {
+      statusDiv.className = 'status connected';
+      statusDiv.innerHTML = '✅ Connected - ID: ' + socket.id;
+      addMessage('Connected to server');
+    });
+    
+    socket.on('disconnect', (reason) => {
+      statusDiv.className = 'status disconnected';
+      statusDiv.innerHTML = '❌ Disconnected - ' + reason;
+      addMessage('Disconnected from server: ' + reason);
+    });
+    
+    socket.on('connect_error', (error) => {
+      addMessage('Connection error: ' + error.message);
+    });
+    
+    // Server events
+    socket.on('welcome', (data) => {
+      addMessage('🎉 ' + data.message);
+    });
+    
+    socket.on('message:new', (message) => {
+      addMessage('💬 ' + message.content + ' (from ' + message.userId.substring(0, 8) + '...)');
+    });
+    
+    socket.on('user:joined', (data) => {
+      addMessage('👋 User joined room: ' + data.roomName);
+    });
+    
+    socket.on('user:left', (data) => {
+      addMessage('👋 User left room: ' + data.roomName);
+    });
+    
+    socket.on('typing:update', (data) => {
+      if (data.isTyping) {
+        addMessage('✏️ Someone is typing in ' + data.roomName + '...');
+      }
+    });
+    
+    socket.on('custom:broadcast', (data) => {
+      addMessage('📢 Custom event from ' + data.from.substring(0, 8) + '...: ' + JSON.stringify(data.data));
+    });
+    
+    // Client functions
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const roomInput = document.getElementById('roomInput');
+      
+      if (input.value.trim()) {
+        socket.emit('message:send', {
+          content: input.value,
+          roomName: roomInput.value || undefined
+        }, (response) => {
+          if (response.success) {
+            addMessage('✉️ Sent: ' + input.value);
+          } else {
+            addMessage('❌ Failed to send message');
+          }
+        });
+        input.value = '';
+      }
+    }
+    
+    function joinRoom() {
+      const roomInput = document.getElementById('roomInput');
+      if (roomInput.value.trim()) {
+        socket.emit('join:room', roomInput.value, (response) => {
+          addMessage(response.success ? '✅ ' + response.message : '❌ ' + response.message);
+        });
+      }
+    }
+    
+    function leaveRoom() {
+      const roomInput = document.getElementById('roomInput');
+      if (roomInput.value.trim()) {
+        socket.emit('leave:room', roomInput.value, (response) => {
+          addMessage(response.success ? '✅ ' + response.message : '❌ ' + response.message);
+        });
+      }
+    }
+    
+    function addMessage(text) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message';
+      
+      const time = new Date().toLocaleTimeString();
+      messageDiv.innerHTML = '<span class="time">' + time + '</span>' + text;
+      
+      messagesDiv.insertBefore(messageDiv, messagesDiv.firstChild);
+      
+      // Keep only last 50 messages
+      while (messagesDiv.children.length > 50) {
+        messagesDiv.removeChild(messagesDiv.lastChild);
+      }
+    }
+    
+    // Keyboard shortcuts
+    document.getElementById('messageInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+    
+    // Typing indicators
+    let typingTimeout;
+    document.getElementById('messageInput').addEventListener('input', (e) => {
+      const roomInput = document.getElementById('roomInput');
+      if (roomInput.value && e.target.value) {
+        socket.emit('typing:start', roomInput.value);
+        
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+          socket.emit('typing:stop', roomInput.value);
+        }, 1000);
+      }
+    });
+    
+    // Send test custom event
+    setTimeout(() => {
+      socket.emit('custom:event', { test: 'data', timestamp: Date.now() }, (response) => {
+        console.log('Custom event response:', response);
+      });
+    }, 2000);
+  </script>
+</body>
+</html>

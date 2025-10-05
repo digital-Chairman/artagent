@@ -1,18 +1,15 @@
 # Dependencies
 node_modules/
-.pnpm-store/
 
-# Build outputs
+# Build output
 dist/
 build/
-.next/
-out/
+*.tsbuildinfo
 
 # Environment files
 .env
 .env.local
 .env.production
-.env.development
 
 # IDE
 .vscode/
@@ -27,7 +24,6 @@ npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
 
 # OS files
 .DS_Store
@@ -36,7 +32,3 @@ Thumbs.db
 # Testing
 coverage/
 .nyc_output
-
-# Misc
-*.tsbuildinfo
-.turbo/
