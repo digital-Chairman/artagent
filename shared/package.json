@@ -1,0 +1,14 @@
+{
+  "name": "@artagent/shared",
+  "version": "1.0.0",
+  "description": "Shared types and utilities for ArtAgent",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.28",
+    "typescript": "^5.3.3"
+  }
+}

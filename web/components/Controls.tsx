@@ -6,9 +6,11 @@ import { AnimatePresence, motion } from "motion/react";
 import { Toggle } from "./ui/toggle";
 import MicFFT from "./MicFFT";
 import { cn } from "@/utils";
+import { useSocketContext } from "./providers/SocketProvider";
 
 export default function Controls() {
   const { disconnect, status, isMuted, unmute, mute, micFft } = useVoice();
+  const { disconnect: disconnectSocket } = useSocketContext();
 
   return (
     <div
@@ -63,6 +65,8 @@ export default function Controls() {
             <Button
               className={"flex items-center gap-1 rounded-full"}
               onClick={() => {
+                // Disconnect from Socket.IO when ending the call
+                disconnectSocket();
                 disconnect();
               }}
               variant={"destructive"}

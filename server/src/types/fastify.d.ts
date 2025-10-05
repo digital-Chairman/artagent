@@ -1,5 +1,5 @@
 import { Server as SocketIOServer } from 'socket.io';
-import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from './socket';
+import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from '@artagent/shared';
 
 declare module 'fastify' {
   interface FastifyInstance {

@@ -6,6 +6,7 @@ import Controls from "./Controls";
 import StartCall from "./StartCall";
 import { ComponentRef, useRef } from "react";
 import { toast } from "sonner";
+import { useSocketContext } from "./providers/SocketProvider";
 
 export default function ClientComponent({
   accessToken,
@@ -14,41 +15,46 @@ export default function ClientComponent({
 }) {
   const timeout = useRef<number | null>(null);
   const ref = useRef<ComponentRef<typeof Messages> | null>(null);
+  const socket = useSocketContext();
 
   // optional: use configId from environment variable
   const configId = process.env['NEXT_PUBLIC_HUME_CONFIG_ID'];
-  
+
   return (
     <div
       className={
         "relative grow flex flex-col mx-auto w-full overflow-hidden h-[0px]"
       }
     >
-      <VoiceProvider
-        onMessage={() => {
-          if (timeout.current) {
-            window.clearTimeout(timeout.current);
-          }
-
-          timeout.current = window.setTimeout(() => {
-            if (ref.current) {
-              const scrollHeight = ref.current.scrollHeight;
-
-              ref.current.scrollTo({
-                top: scrollHeight,
-                behavior: "smooth",
-              });
+        <VoiceProvider
+          onMessage={() => {
+            if (timeout.current) {
+              window.clearTimeout(timeout.current);
             }
-          }, 200);
-        }}
-        onError={(error) => {
-          toast.error(error.message);
-        }}
-      >
-        <Messages ref={ref} />
-        <Controls />
-        <StartCall configId={configId} accessToken={accessToken} />
-      </VoiceProvider>
+
+            timeout.current = window.setTimeout(() => {
+              if (ref.current) {
+                const scrollHeight = ref.current.scrollHeight;
+
+                ref.current.scrollTo({
+                  top: scrollHeight,
+                  behavior: "smooth",
+                });
+              }
+            }, 200);
+          }}
+          onError={(error) => {
+            toast.error(error.message);
+          }}
+          onAudioReceived={(audioOutputMessage) => {
+            console.log("Audio Received", audioOutputMessage);
+            socket.emit("audio:received");
+          }}
+        >
+          <Messages ref={ref} />
+          <Controls />
+          <StartCall configId={configId} accessToken={accessToken} />
+        </VoiceProvider>
     </div>
   );
 }

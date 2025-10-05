@@ -38,6 +38,8 @@ export interface ServerToClientEvents {
     data: any;
     timestamp: string;
   }) => void;
+
+  'audio:received': () => void;
 }
 
 export interface ClientToServerEvents {
@@ -82,6 +84,8 @@ export interface ClientToServerEvents {
       message: string;
     }) => void
   ) => void;
+
+  'audio:received': () => void;
 }
 
 export interface InterServerEvents {

@@ -3,9 +3,11 @@ import { AnimatePresence, motion } from "motion/react";
 import { Button } from "./ui/button";
 import { Phone } from "lucide-react";
 import { toast } from "sonner";
+import { useSocketContext } from "./providers/SocketProvider";
 
 export default function StartCall({ configId, accessToken }: { configId?: string, accessToken: string }) {
   const { status, connect } = useVoice();
+  const { connect: connectSocket } = useSocketContext();
 
   return (
     <AnimatePresence>
@@ -38,7 +40,13 @@ export default function StartCall({ configId, accessToken }: { configId?: string
                     // additional options can be added here
                     // like resumedChatGroupId and sessionSettings
                   })
-                    .then(() => {})
+                    .then(() => {
+                      // Connect to Socket.IO server after Hume connects
+                      connectSocket().catch((error) => {
+                        console.error('Failed to connect to Socket.IO:', error);
+                        toast.error("Failed to connect to collaboration server");
+                      });
+                    })
                     .catch(() => {
                       toast.error("Unable to start call");
                     })

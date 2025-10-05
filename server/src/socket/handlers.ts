@@ -1,5 +1,5 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
-import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from '../types/socket.js';
+import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from '@artagent/shared';
 
 export function setupSocketHandlers(io: SocketIOServer<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>) {
   // Middleware for authentication (optional)
@@ -142,6 +142,12 @@ export function setupSocketHandlers(io: SocketIOServer<ClientToServerEvents, Ser
       }
     });
 
+    // Handle audio received
+    socket.on('audio:received', () => {
+      console.log('Audio received');
+      socket.in('art').emit('audio:received');
+    });
+
     // Handle disconnect
     socket.on('disconnect', (reason) => {
       console.log(`❌ Client disconnected: ${socket.id} - Reason: ${reason}`);
@@ -157,14 +163,9 @@ export function setupSocketHandlers(io: SocketIOServer<ClientToServerEvents, Ser
     });
 
     // Handle errors
-    socket.on('error', (error) => {
+    socket.on('error', (error: Error) => {
       console.error(`⚠️ Socket error for ${socket.id}:`, error);
     });
-  });
-
-  // Server-wide error handling
-  io.on('error', (error) => {
-    console.error('⚠️ Socket.IO server error:', error);
   });
 }
 
